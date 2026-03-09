@@ -1,0 +1,208 @@
+<mujoco model="srl_iron_spider">
+  <compiler angle="radian" meshdir="../meshes/" autolimits="true"/>
+
+  <option integrator="RK4" timestep="0.002" gravity="0 0 -9.81" impratio="10">
+    <flag energy="enable" contact="enable"/>
+  </option>
+
+  <default>
+    <joint armature="0.01" damping="0.1" limited="true"/>
+    <geom contype="1" conaffinity="1" condim="3" density="1000" solref="0.02 1" solimp="0.9 0.95 0.001"/>
+    <position kp="100" kv="10" ctrlrange="-3.14 3.14" forcerange="-50 50"/>
+    
+    <!-- Redesigned Arm Materials -->
+    <default class="odd_segment">
+      <geom type="capsule" size="0.018 0.04" rgba="0.2 0.25 0.3 1" contype="2" conaffinity="1"/>
+    </default>
+    <default class="even_segment">
+      <geom type="capsule" size="0.018 0.04" rgba="0.05 0.7 0.9 0.9" contype="2" conaffinity="1"/>
+    </default>
+    <default class="claw">
+      <geom type="capsule" size="0.008 0.02" rgba="0.9 0.4 0.1 1"/>
+    </default>
+    <!-- Human skin tone/style -->
+    <default class="human">
+      <geom contype="0" conaffinity="0" rgba="0.62 0.52 0.42 1"/>
+    </default>
+  </default>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300" mark="edge" markrgb=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+  </asset>
+
+  <worldbody>
+    <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1" castshadow="true"/>
+    <light pos="0.5 -1 2" dir="-0.3 0.5 -0.8" diffuse="0.8 0.8 0.8"/>
+    <light pos="-0.5 -1 2" dir="0.3 0.5 -0.8" diffuse="0.6 0.7 0.8"/>
+    
+    <geom name="floor" type="plane" size="0 0 .05" material="grid" condim="1"/>
+
+    <!-- FIXED BASE -->
+    <body name="torso_base" pos="0 0 0.9">
+      <!-- Human Stand-in -->
+      <geom name="human_torso" class="human" type="cylinder" size="0.14 0.25" pos="0 0 0" contype="1" conaffinity="2"/>
+      <geom name="human_head" class="human" type="sphere" size="0.1" pos="0 0 0.35" contype="1" conaffinity="2"/>
+      <geom name="human_r_upper_arm" class="human" type="capsule" fromto="0 -0.15 0.2  0 -0.2 -0.1" size="0.035" contype="1" conaffinity="2"/>
+      <geom name="human_l_upper_arm" class="human" type="capsule" fromto="0  0.15 0.2  0  0.2 -0.1" size="0.035" contype="1" conaffinity="2"/>
+
+      <!-- Backpack: Slim Titanium Disc (centered on spine, mid-back) -->
+      <geom name="backpack_disc" type="cylinder" size="0.08 0.03" 
+            pos="-0.15 0 0.15" euler="0 1.5708 0" 
+            rgba="0.15 0.15 0.18 1" contype="0" conaffinity="0"/>
+      
+      <!-- RIGHT ARM: mounts from disc, arcs over right shoulder -->
+      <body name="r_shoulder_mount" 
+            pos="-0.13 -0.07 0.22" euler="-30 -60 -70">
+        <joint name="r_joint1" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+        <geom class="odd_segment" pos="0 0 0.04"/>
+        <body name="r_seg2" pos="0 0 0.08">
+          <joint name="r_joint2" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+          <geom class="even_segment" pos="0 0 0.04"/>
+          <geom type="cylinder" size="0.025 0.005" pos="0 0 0" rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+          <body name="r_seg3" pos="0 0 0.08">
+            <joint name="r_joint3" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+            <geom class="odd_segment" pos="0 0 0.04"/>
+            <body name="r_seg4" pos="0 0 0.08">
+              <joint name="r_joint4" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+              <geom class="even_segment" pos="0 0 0.04"/>
+              <body name="r_seg5" pos="0 0 0.08">
+                <joint name="r_joint5" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+                <geom class="odd_segment" pos="0 0 0.04"/>
+                <body name="r_seg6" pos="0 0 0.08">
+                  <joint name="r_joint6" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+                  <geom class="even_segment" pos="0 0 0.04"/>
+                  <body name="r_seg7" pos="0 0 0.08">
+                    <joint name="r_joint7" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+                    <geom class="odd_segment" pos="0 0 0.04"/>
+                    <body name="r_seg8" pos="0 0 0.08">
+                      <joint name="r_joint8" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+                      <geom class="even_segment" pos="0 0 0.04"/>
+                      <body name="r_claw_base" pos="0 0 0.04">
+                        <!-- Central hub -->
+                        <geom type="sphere" size="0.022" rgba="0.15 0.15 0.18 1" contype="0" conaffinity="0"/>
+                        
+                        <!-- Jaw 1 — forward -->
+                        <geom type="capsule" fromto="0 0 0  0.0 0.035 0.038" 
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="0.0 0.035 0.038  0.0 0.028 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Jaw 2 — back-right (120 degrees) -->
+                        <geom type="capsule" fromto="0 0 0  0.030 -0.018 0.038"
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="0.030 -0.018 0.038  0.024 -0.014 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Jaw 3 — back-left (240 degrees) -->
+                        <geom type="capsule" fromto="0 0 0  -0.030 -0.018 0.038"
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="-0.030 -0.018 0.038  -0.024 -0.014 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Inner glow sphere at claw center -->
+                        <geom type="sphere" size="0.011" pos="0 0 0.04" 
+                              rgba="0.0 0.85 1.0 0.9" contype="0" conaffinity="0"/>
+                              
+                        <site name="r_gripper" pos="0 0 0.075" size="0.005"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <!-- LEFT ARM: mounts from disc, arcs over left shoulder -->
+      <body name="l_shoulder_mount" 
+            pos="-0.13 0.07 0.22" euler="-30 60 70">
+        <joint name="l_joint1" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+        <geom class="odd_segment" pos="0 0 0.04"/>
+        <body name="l_seg2" pos="0 0 0.08">
+          <joint name="l_joint2" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+          <geom class="even_segment" pos="0 0 0.04"/>
+          <geom type="cylinder" size="0.025 0.005" pos="0 0 0" rgba="0.4 0.4 0.4 1" contype="0" conaffinity="0"/>
+          <body name="l_seg3" pos="0 0 0.08">
+            <joint name="l_joint3" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+            <geom class="odd_segment" pos="0 0 0.04"/>
+            <body name="l_seg4" pos="0 0 0.08">
+              <joint name="l_joint4" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+              <geom class="even_segment" pos="0 0 0.04"/>
+              <body name="l_seg5" pos="0 0 0.08">
+                <joint name="l_joint5" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+                <geom class="odd_segment" pos="0 0 0.04"/>
+                <body name="l_seg6" pos="0 0 0.08">
+                  <joint name="l_joint6" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+                  <geom class="even_segment" pos="0 0 0.04"/>
+                  <body name="l_seg7" pos="0 0 0.08">
+                    <joint name="l_joint7" type="hinge" axis="0 1 0" range="-3.14 3.14"/>
+                    <geom class="odd_segment" pos="0 0 0.04"/>
+                    <body name="l_seg8" pos="0 0 0.08">
+                      <joint name="l_joint8" type="hinge" axis="1 0 0" range="-3.14 3.14"/>
+                      <geom class="even_segment" pos="0 0 0.04"/>
+                      <body name="l_claw_base" pos="0 0 0.04">
+                        <!-- Central hub -->
+                        <geom type="sphere" size="0.022" rgba="0.15 0.15 0.18 1" contype="0" conaffinity="0"/>
+                        
+                        <!-- Jaw 1 — forward -->
+                        <geom type="capsule" fromto="0 0 0  0.0 0.035 0.038" 
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="0.0 0.035 0.038  0.0 0.028 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Jaw 2 — back-right (120 degrees) -->
+                        <geom type="capsule" fromto="0 0 0  0.030 -0.018 0.038"
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="0.030 -0.018 0.038  0.024 -0.014 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Jaw 3 — back-left (240 degrees) -->
+                        <geom type="capsule" fromto="0 0 0  -0.030 -0.018 0.038"
+                              size="0.008" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                        <geom type="capsule" fromto="-0.030 -0.018 0.038  -0.024 -0.014 0.072"
+                              size="0.007" rgba="0.85 0.35 0.05 1" contype="0" conaffinity="0"/>
+                              
+                        <!-- Inner glow sphere at claw center -->
+                        <geom type="sphere" size="0.011" pos="0 0 0.04" 
+                              rgba="0.0 0.85 1.0 0.9" contype="0" conaffinity="0"/>
+                              
+                        <site name="l_gripper" pos="0 0 0.075" size="0.005"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <!-- S-Curve Pose: back disc -> up -> forward -> down arc -->
+    <key name="home"
+         qpos="-1.2  0.5 -0.8  0.4 -0.4  0.3 -0.2  0.1
+               -1.2  0.5 -0.8  0.4 -0.4  0.3 -0.2  0.1"/>
+  </keyframe>
+
+  <actuator>
+    <position name="r_act1" joint="r_joint1"/><position name="r_act2" joint="r_joint2"/>
+    <position name="r_act3" joint="r_joint3"/><position name="r_act4" joint="r_joint4"/>
+    <position name="r_act5" joint="r_joint5"/><position name="r_act6" joint="r_joint6"/>
+    <position name="r_act7" joint="r_joint7"/><position name="r_act8" joint="r_joint8"/>
+
+    <position name="l_act1" joint="l_joint1"/><position name="l_act2" joint="l_joint2"/>
+    <position name="l_act3" joint="l_joint3"/><position name="l_act4" joint="l_joint4"/>
+    <position name="l_act5" joint="l_joint5"/><position name="l_act6" joint="l_joint6"/>
+    <position name="l_act7" joint="l_joint7"/><position name="l_act8" joint="l_joint8"/>
+  </actuator>
+
+  <sensor>
+    <force name="r_force" site="r_gripper"/>
+    <force name="l_force" site="l_gripper"/>
+  </sensor>
+</mujoco>

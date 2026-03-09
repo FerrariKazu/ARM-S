@@ -1,0 +1,3 @@
+string mode
+float32 urgency_level
+bool human_proximity_alert

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+srl_env/
+*.egg-info/
+
+# Tracking & Logs
+.wandb/
+training/logs/
+notebooks/*.png
+
+# Data & Models (Datasets too large for git)
+checkpoints/*.pt
+!checkpoints/.gitkeep
+training/data/*.npz
+*.onnx
+
+# ROS2 Build Artifacts
+build/
+install/
+log/
+
+# IDEs & System
+.idea/
+.vscode/
+*.swp
+.DS_Store
