@@ -109,31 +109,53 @@ class ReachPolicy(HumanMotionPolicy):
       The "Item Picker" behavior. Alternately reaches forward with the 
       Left and Right arms.
     """
+    def __init__(self, num_arm_joints: int = 16):
+        super().__init__(num_arm_joints)
+        self.cycle_time = 3.0
+
     def step(self, t: float) -> Dict[str, Any]:
         """
-        WHAT THIS DOES: Ramps the shoulders forward and back.
+        WHAT THIS DOES: Ramps the shoulders forward and upward.
         """
-        cycle_duration = 3.0 # Full session takes 3 seconds
-        t_cycle = t % cycle_duration # Find where we are in the current loop
+        cycle = (t % self.cycle_time) / self.cycle_time  # 0.0 to 1.0
         
-        targets = np.zeros(self.num_arm_joints)
+        # Phase 1 (0.0-0.4): right arm lifts and reaches forward
+        # Phase 2 (0.4-0.6): hold at extension  
+        # Phase 3 (0.6-1.0): return smoothly
         
-        if t_cycle < 1.5:
-            # PHASE 1: Left Arm Reaches Forward
-            val = self._smooth_step(t_cycle, 0, 1.2, 1.5)
-            targets[8] = val 
-            label = "reach_left"
+        targets = np.zeros(16)
+        
+        if cycle < 0.4:
+            progress = cycle / 0.4  # 0 to 1
+            # Apply cosine easing for smooth start/stop
+            smooth = 0.5*(1 - np.cos(np.pi*progress))
+            # Right arm: lift (joint2 negative = up), reach forward (joint1)
+            targets[0] =  0.4 * smooth   # shoulder out slightly
+            targets[1] = -0.6 * smooth   # lift upward
+            targets[2] = -0.4 * smooth   # curve forward
+            targets[3] = -0.2 * smooth   # wrist follow
+        elif cycle < 0.6:
+            # Phase 2: HOLD extended position
+            targets[0] =  0.4
+            targets[1] = -0.6
+            targets[2] = -0.4
+            targets[3] = -0.2
         else:
-            # PHASE 2: Right Arm Reaches Forward
-            # Reset timeline to 0 for the start of the Right reach
-            val = self._smooth_step(t_cycle - 1.5, 0, -1.2, 1.5)
-            targets[0] = val 
-            label = "reach_right"
-            
+            # Phase 3: RETURN smoothly to home
+            progress = (cycle - 0.6) / 0.4
+            smooth = 0.5*(1 - np.cos(np.pi*progress))
+            targets[0] =  0.4 * (1 - smooth)
+            targets[1] = -0.6 * (1 - smooth)
+            targets[2] = -0.4 * (1 - smooth)
+            targets[3] = -0.2 * (1 - smooth)
+        
+        # Left arm stays in neutral rest position (offset slightly for variety)
+        targets[8:12] = [0.1, -0.2, -0.1, 0.0]
+        
         return {
-            "joint_targets": targets,
-            "intent_label": label,
-            "time_to_next_action": 1.5 - (t_cycle % 1.5)
+            'joint_targets': targets,
+            'intent_label': 'reach_right' if cycle < 0.6 else 'release',
+            'time_to_next_action': (1.0 - cycle) * self.cycle_time
         }
 
 class AssemblyPolicy(HumanMotionPolicy):

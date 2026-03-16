@@ -33,19 +33,87 @@
   </asset>
 
   <worldbody>
-    <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1" castshadow="true"/>
-    <light pos="0.5 -1 2" dir="-0.3 0.5 -0.8" diffuse="0.8 0.8 0.8"/>
-    <light pos="-0.5 -1 2" dir="0.3 0.5 -0.8" diffuse="0.6 0.7 0.8"/>
+    <!-- LIGHTING — cinematic multi-light setup -->
+    <!-- Key light — front top, warm -->
+    <light name="key_light" pos="1 -2 3" 
+           dir="-0.3 0.5 -0.8"
+           diffuse="0.6 0.65 0.7" specular="0.3 0.3 0.4"
+           castshadow="false"/>
+    <!-- Fill light — left side, cool cyan tint -->
+    <light name="fill_light" pos="-2 0 2"
+           dir="0.6 0 -0.5"
+           diffuse="0.05 0.2 0.35" specular="0.1 0.1 0.2"
+           castshadow="false"/>
+    <!-- Rim light — back, purple tint -->
+    <light name="rim_light" pos="0 2 1.5"
+           dir="0 -0.7 -0.4"
+           diffuse="0.2 0.05 0.3" specular="0.1 0 0.15"
+           castshadow="false"/>
+    <!-- Under-glow — from below, very subtle cyan -->
+    <light name="under_glow" pos="0 -0.5 0.1"
+           dir="0 0.2 0.8"
+           diffuse="0.02 0.08 0.12" specular="0 0 0"
+           castshadow="false"/>
+
+    <!-- ENVIRONMENT — a proper room not just a ground plane -->
+    <!-- Dark floor with grid feel -->
+    <geom name="floor" type="plane" size="4 4 0.1" 
+          rgba="0.05 0.08 0.12 1" condim="3"/>
     
-    <geom name="floor" type="plane" size="0 0 .05" material="grid" condim="1"/>
+    <!-- Three walls forming a corner behind the figure -->
+    <geom name="wall_back" type="box" size="4 0.05 2" 
+          pos="0 2.0 1" rgba="0.08 0.1 0.15 1"/>
+    <geom name="wall_left" type="box" size="0.05 4 2"
+          pos="-2.0 0 1" rgba="0.08 0.1 0.15 1"/>
+    
+    <!-- Workbench in front of figure -->
+    <geom name="workbench" type="box" size="0.6 0.3 0.03"
+          pos="0 -0.65 0.75" rgba="0.12 0.15 0.2 1"/>
+    <!-- Workbench legs -->
+    <geom name="bench_leg1" type="cylinder" size="0.02 0.37"
+          pos="-0.55 -0.8 0.38" rgba="0.15 0.15 0.2 1"/>
+    <geom name="bench_leg2" type="cylinder" size="0.02 0.37"
+          pos="0.55 -0.8 0.38" rgba="0.15 0.15 0.2 1"/>
+    <geom name="bench_leg3" type="cylinder" size="0.02 0.37"
+          pos="-0.55 -0.3 0.38" rgba="0.15 0.15 0.2 1"/>
+    <geom name="bench_leg4" type="cylinder" size="0.02 0.37"
+          pos="0.55 -0.3 0.38" rgba="0.15 0.15 0.2 1"/>
+
+    <!-- INTERACTIVE OBJECTS — things the arms can pick up -->
+    <!-- Object A: Cyan glowing cube — primary target -->
+    <body name="obj_cube" pos="0.18 -0.65 0.82">
+      <freejoint name="cube_joint"/>
+      <geom type="box" size="0.035 0.035 0.035"
+            rgba="0.0 0.85 1.0 1" mass="0.3"
+            solimp="0.9 0.95 0.001" solref="0.02 1"/>
+      <site name="cube_site" size="0.005"/>
+    </body>
+    
+    <!-- Object B: Orange sphere — secondary target -->
+    <body name="obj_sphere" pos="-0.18 -0.65 0.82">
+      <freejoint name="sphere_joint"/>
+      <geom type="sphere" size="0.04"
+            rgba="1.0 0.45 0.1 1" mass="0.2"
+            solimp="0.9 0.95 0.001" solref="0.02 1"/>
+      <site name="sphere_site" size="0.005"/>
+    </body>
+    
+    <!-- Object C: Purple cylinder — handoff object -->
+    <body name="obj_cylinder" pos="0.0 -0.65 0.86">
+      <freejoint name="cylinder_joint"/>
+      <geom type="cylinder" size="0.025 0.055"
+            rgba="0.6 0.1 0.9 1" mass="0.25"
+            solimp="0.9 0.95 0.001" solref="0.02 1"/>
+      <site name="cylinder_site" size="0.005"/>
+    </body>
 
     <!-- FIXED BASE -->
-    <body name="torso_base" pos="0 0 0.9">
+    <body name="torso_base" pos="0 0 0.9" euler="0 0 0">
       <!-- Human Stand-in -->
       <geom name="human_torso" class="human" type="cylinder" size="0.14 0.25" pos="0 0 0" contype="1" conaffinity="2"/>
-      <geom name="human_head" class="human" type="sphere" size="0.1" pos="0 0 0.35" contype="1" conaffinity="2"/>
-      <geom name="human_r_upper_arm" class="human" type="capsule" fromto="0 -0.15 0.2  0 -0.2 -0.1" size="0.035" contype="1" conaffinity="2"/>
-      <geom name="human_l_upper_arm" class="human" type="capsule" fromto="0  0.15 0.2  0  0.2 -0.1" size="0.035" contype="1" conaffinity="2"/>
+      <geom name="human_head" class="human" type="sphere" size="0.1" pos="0 -0.05 0.35" contype="1" conaffinity="2"/>
+      <geom name="human_r_upper_arm" class="human" type="capsule" fromto="0.18 0 0.2   0.22 0.05 -0.1" size="0.035" contype="1" conaffinity="2"/>
+      <geom name="human_l_upper_arm" class="human" type="capsule" fromto="-0.18 0 0.2  -0.22 0.05 -0.1" size="0.035" contype="1" conaffinity="2"/>
 
       <!-- Backpack: Slim Titanium Disc (centered on spine, mid-back) -->
       <geom name="backpack_disc" type="cylinder" size="0.08 0.03" 
@@ -182,10 +250,35 @@
     </body>
   </worldbody>
 
+  <equality>
+    <weld name="grasp_right" body1="r_claw_base" body2="obj_cube"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+    <weld name="grasp_left"  body1="l_claw_base" body2="obj_cube"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+    <weld name="grasp_sphere_r" body1="r_claw_base" body2="obj_sphere"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+    <weld name="grasp_sphere_l" body1="l_claw_base" body2="obj_sphere"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+    <weld name="grasp_cyl_r" body1="r_claw_base" body2="obj_cylinder"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+    <weld name="grasp_cyl_l" body1="l_claw_base" body2="obj_cylinder"
+          relpose="0 0 -0.06 1 0 0 0"
+          active="false" solref="0.01 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+
   <keyframe>
     <!-- S-Curve Pose: back disc -> up -> forward -> down arc -->
+    <!-- qpos includes 3 freejoints (3 * 7 = 21) plus 16 arm joints = 37 -->
     <key name="home"
-         qpos="-1.2  0.5 -0.8  0.4 -0.4  0.3 -0.2  0.1
+         qpos="0.18 -0.65 0.82 1 0 0 0
+               -0.18 -0.65 0.82 1 0 0 0
+               0.0 -0.65 0.86 1 0 0 0
+               -1.2  0.5 -0.8  0.4 -0.4  0.3 -0.2  0.1
                -1.2  0.5 -0.8  0.4 -0.4  0.3 -0.2  0.1"/>
   </keyframe>
 

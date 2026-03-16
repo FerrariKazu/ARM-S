@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # ═══════════════════════════════════════════════════════
 # FILE: dashboard_controllers.py
 # PURPOSE: Technical deep-dive visualizer; provides a high-resolution HUD for individual controllers.
@@ -69,7 +70,7 @@ class ControllerDashboard:
         self.fig.text(0.5, 0.02, "All 7 Controllers — PASS | ARM-S Phase 3-5 | Deployment: Linux-WSL2",
                       ha='center', va='center', color=TEXT_COLOR, alpha=0.6, fontsize=10)
 
-        self.t = 0
+        self.t = 0.0
         self.dt = 0.1 # Real-time simulation step (100ms)
 
     def _init_pid_panel(self):
@@ -201,9 +202,9 @@ class ControllerDashboard:
         modes = ["INDEPENDENT", "SYMMETRIC", "COOPERATIVE", "HANDOFF"]
         
         for i, mode in enumerate(modes):
-            ax = self.fig.add_subplot(gs_bottom[0, i], facecolor=PANEL_BG)
+            ax = self.fig.add_subplot(gs_bottom[0, i], facecolor='#0A1520')
             ax.set_title(mode, color=TEXT_COLOR, fontsize=10)
-            ax.set_xlim(-1, 1); ax.set_ylim(0, 1)
+            ax.set_xlim(-1.0, 1.0); ax.set_ylim(-0.8, 0.8)
             ax.set_xticks([]); ax.set_yticks([])
             
             for spine in ax.spines.values():
@@ -212,10 +213,15 @@ class ControllerDashboard:
             line_l, = ax.plot([], [], color='#3388FF', linewidth=2, label="Left")
             line_r, = ax.plot([], [], color='#FF8833', linewidth=2, label="Right")
             
+            # Cooperative Target Marker (White Star)
+            target_star = None
+            if mode == "COOPERATIVE":
+                target_star, = ax.plot([0], [0], 'w*', markersize=10, alpha=0.8)
+                
             if i == 0:
                 ax.legend(loc='lower center', ncol=2, fontsize=8, frameon=False)
                 
-            self.coords.append({'ax': ax, 'mode': mode, 'line_l': line_l, 'line_r': line_r})
+            self.coords.append({'ax': ax, 'mode': mode, 'line_l': line_l, 'line_r': line_r, 'target': target_star})
         self.coord_timer = 0
         self.coord_idx = 0
 
@@ -258,7 +264,7 @@ class ControllerDashboard:
         self.repel_arrows.clear()
             
         for z in self.zones:
-            dist = max(0.01, np.sqrt((ee_x - z[0])**2 + (ee_y - z[1])**2))
+            dist = max(0.01, float(np.sqrt((ee_x - z[0])**2 + (ee_y - z[1])**2)))
             if dist < (z[2] + 0.15): 
                 # DRAW REPULSION: The closer the hand, the thicker the red arrows
                 arr_len = max(0, 0.05 / dist) 
@@ -341,18 +347,44 @@ class ControllerDashboard:
             p['ax'].spines['bottom'].set_linewidth(3 if i == self.coord_idx else 1)
             p['ax'].spines['bottom'].set_color(CYAN if i == self.coord_idx else '#333333')
             
-            # Simple dot-motion visualization for each strategy
-            mx = np.sin(self.t * 3) * 0.4
-            my = 0.5 + np.cos(self.t * 3) * 0.3
-            if p['mode'] == "SYMMETRIC":
-                p['line_l'].set_data([mx-0.3], [my]); p['line_r'].set_data([-(mx-0.3)], [my])
+            # Trajectory Calculation
+            t_vals = np.linspace(0, 2*np.pi, 50)
+            offset = self.t * 2.0
+            
+            if p['mode'] == "INDEPENDENT":
+                # Both arms doing their own thing
+                lx = -0.5 + 0.3 * np.cos(t_vals + offset)
+                ly = 0.3 * np.sin(t_vals + offset)
+                rx = 0.5 + 0.25 * np.cos(2*t_vals + offset*1.7)
+                ry = 0.25 * np.sin(1.5*t_vals + offset*1.3)
+                p['line_l'].set_data(lx, ly)
+                p['line_r'].set_data(rx, ry)
+                
+            elif p['mode'] == "SYMMETRIC":
+                # Butterfly / Figure-8 mirrored motion
+                lx = 0.4 * np.sin(t_vals + offset)
+                ly = 0.2 * np.sin(2*t_vals + offset)
+                p['line_l'].set_data(lx, ly)
+                p['line_r'].set_data(-lx, ly)
+                
+            elif p['mode'] == "COOPERATIVE":
+                # Spiraling toward joint target
+                theta = np.linspace(0, 4*np.pi, 60)
+                r_scale = 0.6 - 0.5 * (theta / (4*np.pi))
+                lx = -0.3 + r_scale * np.cos(theta + offset)
+                ly = r_scale * np.sin(theta + offset)
+                rx = 0.3 + r_scale * np.cos(theta + np.pi + offset)
+                ry = r_scale * np.sin(theta + np.pi + offset)
+                p['line_l'].set_data(lx, ly)
+                p['line_r'].set_data(rx, ry)
+                
             elif p['mode'] == "HANDOFF":
                 # Arc path for object handoff
                 trc = np.linspace(0, np.pi, 20)
                 cyc = (self.coord_timer % 4.0) / 4.0
                 idx = int(cyc * 19)
-                p['line_l'].set_data(-0.8+0.8*np.cos(trc[:idx+1]), 0.5+0.3*np.sin(trc[:idx+1]))
-                p['line_r'].set_data(0.8-0.8*np.cos(trc[:idx+1]), 0.5+0.3*np.sin(trc[:idx+1]))
+                p['line_l'].set_data(-0.8+0.8*np.cos(trc[:idx+1]), 0.1+0.3*np.sin(trc[:idx+1]))
+                p['line_r'].set_data(0.8-0.8*np.cos(trc[:idx+1]), 0.1+0.3*np.sin(trc[:idx+1]))
 
 if __name__ == "__main__":
     db = ControllerDashboard()
